@@ -1,0 +1,142 @@
+-- ============================================================
+-- IT Service Desk Analytics - SQL Analysis
+-- Database: PostgreSQL
+-- Tables: tickets, agents, merchants
+-- ============================================================
+
+
+-- 1. How many tickets are there for each priority?
+SELECT
+    priority,
+    COUNT(*) AS total_tickets
+FROM tickets
+GROUP BY priority
+ORDER BY total_tickets DESC;
+
+
+-- 2. Which categories have the most tickets?
+SELECT
+    category,
+    COUNT(*) AS total_tickets
+FROM tickets
+GROUP BY category
+ORDER BY total_tickets DESC;
+
+
+-- 3. What is the average resolution time for each priority?
+SELECT
+    priority,
+    ROUND(AVG(resolution_hours), 2) AS avg_resolution_hours
+FROM tickets
+WHERE resolution_hours IS NOT NULL
+GROUP BY priority
+ORDER BY avg_resolution_hours DESC;
+
+
+-- 4a. How many tickets breached the resolution SLA?
+SELECT
+    resolution_breached,
+    COUNT(*) AS total_tickets
+FROM tickets
+GROUP BY resolution_breached
+ORDER BY resolution_breached;
+
+
+-- 4b. What is the SLA breach percentage? (uses FILTER)
+SELECT
+    ROUND(
+        100.0 * COUNT(*) FILTER (WHERE resolution_breached = TRUE)
+        / COUNT(*),
+        2
+    ) AS sla_breach_percentage
+FROM tickets;
+
+
+-- 5. How many tickets has each agent handled? (JOIN)
+SELECT
+    a.agent_name,
+    COUNT(t.ticket_id) AS total_tickets
+FROM agents a
+JOIN tickets t
+    ON a.agent_id = t.assigned_agent_id
+GROUP BY a.agent_name
+ORDER BY total_tickets DESC;
+
+
+-- 6. Which categories take the longest to resolve?
+SELECT
+    category,
+    COUNT(*) AS total_tickets,
+    ROUND(AVG(resolution_hours), 2) AS avg_resolution_hours
+FROM tickets
+WHERE resolution_hours IS NOT NULL
+GROUP BY category
+ORDER BY avg_resolution_hours DESC;
+
+
+-- 7. How many tickets are created each month? (DATE_TRUNC)
+SELECT
+    DATE_TRUNC('month', created_at) AS month,
+    COUNT(*) AS total_tickets
+FROM tickets
+GROUP BY month
+ORDER BY month;
+
+
+-- 8. Which merchants generate the most support tickets? (JOIN)
+SELECT
+    m.merchant_name,
+    m.sector,
+    COUNT(t.ticket_id) AS total_tickets
+FROM merchants m
+JOIN tickets t
+    ON m.merchant_id = t.merchant_id
+GROUP BY
+    m.merchant_name,
+    m.sector
+ORDER BY total_tickets DESC
+LIMIT 10;
+
+
+-- 9. What are the top 3 categories for each priority? (CTE + window function)
+WITH category_count AS (
+    SELECT
+        priority,
+        category,
+        COUNT(*) AS total_tickets
+    FROM tickets
+    GROUP BY priority, category
+),
+ranked_categories AS (
+    SELECT
+        priority,
+        category,
+        total_tickets,
+        RANK() OVER (
+            PARTITION BY priority
+            ORDER BY total_tickets DESC
+        ) AS category_rank
+    FROM category_count
+)
+SELECT
+    priority,
+    category,
+    total_tickets
+FROM ranked_categories
+WHERE category_rank <= 3
+ORDER BY priority, category_rank;
+
+
+-- 10. Which tickets should the service desk investigate?
+SELECT
+    ticket_id,
+    priority,
+    category,
+    resolution_hours,
+    resolution_breached,
+    is_reopened
+FROM tickets
+WHERE resolution_breached = TRUE
+   OR is_reopened = TRUE
+ORDER BY resolution_hours DESC NULLS LAST
+LIMIT 20;
