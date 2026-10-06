@@ -62,6 +62,7 @@ JOIN tickets t
 GROUP BY a.agent_name
 ORDER BY total_tickets DESC;
 
+agent_tickets.png
 
 -- 6. Which categories take the longest to resolve?
 SELECT
@@ -96,7 +97,7 @@ GROUP BY
     m.sector
 ORDER BY total_tickets DESC
 LIMIT 10;
-
+Merchant_queries.png
 
 -- 9. What are the top 3 categories for each priority? (CTE + window function)
 WITH category_count AS (
