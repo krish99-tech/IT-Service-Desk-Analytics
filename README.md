@@ -364,5 +364,11 @@ The analysis is intended to help answer operational questions such as:
 - Are some agents handling significantly more tickets than others?
 - Which merchants generate the highest support volume?
 - Are there recurring areas that may require process improvements?
+## 🔍 SQL Analysis Results
 
+### Tickets Handled by Each Agent
+![Agent Tickets](agent_tickets.png)
+
+### Top Merchants by Ticket Volume
+![Merchant Queries](Merchant_queries.png)
 ---
