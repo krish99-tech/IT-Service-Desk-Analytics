@@ -42,16 +42,6 @@ GROUP BY resolution_breached
 ORDER BY resolution_breached;
 
 
--- 4b. What is the SLA breach percentage? (uses FILTER)
-SELECT
-    ROUND(
-        100.0 * COUNT(*) FILTER (WHERE resolution_breached = TRUE)
-        / COUNT(*),
-        2
-    ) AS sla_breach_percentage
-FROM tickets;
-
-
 -- 5. How many tickets has each agent handled? (JOIN)
 SELECT
     a.agent_name,
@@ -61,8 +51,7 @@ JOIN tickets t
     ON a.agent_id = t.assigned_agent_id
 GROUP BY a.agent_name
 ORDER BY total_tickets DESC;
-
-agent_tickets.png
+![Agent Tickets](agent_tickets.png)
 
 -- 6. Which categories take the longest to resolve?
 SELECT
@@ -97,7 +86,7 @@ GROUP BY
     m.sector
 ORDER BY total_tickets DESC
 LIMIT 10;
-Merchant_queries.png
+![Merchant Queries](Merchant_queries.png)
 
 -- 9. What are the top 3 categories for each priority? (CTE + window function)
 WITH category_count AS (
